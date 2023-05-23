@@ -28,6 +28,17 @@ int leds_interface_uart_init(struct leds_interface_uart *interface, const struct
       };
       break;
 
+    case LEDS_INTERFACE_UART_MODE_24B3I7_0U26_80U:
+      interface->uart_options = (struct uart_options) {
+        .baud_rate    = UART_BAUD_3440000,
+        .data_bits    = UART_DATA_7_BITS,
+        .parity_bits  = UART_PARITY_DISABLE,
+        .stop_bits    = UART_STOP_BITS_1,
+
+        .tx_inverted  = true
+      };
+      break;
+
     case LEDS_INTERFACE_UART_MODE_24B2I8_0U25_50U:
       interface->uart_options = (struct uart_options) {
         .baud_rate    = UART_BAUD_4000000,
@@ -66,6 +77,7 @@ int leds_interface_uart_tx_pixel(struct leds_interface_uart *interface, const st
 {
   switch (interface->mode) {
     case LEDS_INTERFACE_UART_MODE_24B3I7_0U4_80U:
+    case LEDS_INTERFACE_UART_MODE_24B3I7_0U26_80U:
       interface->func.uart_mode_24B3I7(interface->buf.uart_mode_24B3I7, pixels, index, limit);
 
       return uart_write_all(interface->uart, interface->buf.uart_mode_24B3I7, sizeof(interface->buf.uart_mode_24B3I7));
@@ -88,9 +100,10 @@ int leds_interface_uart_tx_pixel(struct leds_interface_uart *interface, const st
 int leds_interface_uart_tx_reset(struct leds_interface_uart *interface)
 {
   switch (interface->mode) {
+    case LEDS_INTERFACE_UART_MODE_24B3I7_0U26_80U:
     case LEDS_INTERFACE_UART_MODE_24B3I7_0U4_80U:
       return uart_mark(interface->uart, 80);
-
+      
     case LEDS_INTERFACE_UART_MODE_24B2I8_0U25_50U:
       return uart_mark(interface->uart, 50);
 

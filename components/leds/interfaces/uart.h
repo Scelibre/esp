@@ -9,6 +9,7 @@
     LEDS_INTERFACE_UART_MODE_NONE = 0,
 
     LEDS_INTERFACE_UART_MODE_24B3I7_0U4_80U,  // 24 bits @ 3 data bits / 7-bit inverted frame @ 0.4u symbols = 2.5M baud, 1.2us / data bit, 80uS reset
+    LEDS_INTERFACE_UART_MODE_24B3I7_0U26_80U,  // 24 bits @ 3 data bits / 7-bit inverted frame @ 0.4u symbols = 2.5M baud, 1.2us / data bit, 80uS reset
     LEDS_INTERFACE_UART_MODE_24B2I8_0U25_50U, // 24 bits @ 2 data bits / 8-bit inverted frame @ 0.25u symbols = 4M baud, 1.25us / data bit, 50uS reset
     LEDS_INTERFACE_UART_MODE_32B2I6_0U3_80U,  // 32 bits @ 2 data bits / 6-bit inverted frame @ 0.3u symbols = 3.33333333M baud, 1.2us / data bit, 80uS reset
   };

@@ -53,6 +53,7 @@ enum leds_interface {
    *  - LEDS_PROTOCOL_WS2812B
    *  - LEDS_PROTOCOL_SK6812_GRBW
    *  - LEDS_PROTOCOL_WS2811
+   *  - LEDS_PROTOCOL_WS2815
    */
   LEDS_INTERFACE_UART           = 2,
 #endif
@@ -61,6 +62,7 @@ enum leds_interface {
   /* Supported protocols:
    *  - LEDS_PROTOCOL_WS2812B
    *  - LEDS_PROTOCOL_WS2811
+   *  - LEDS_PROTOCOL_WS2815
    *  - LEDS_PROTOCOL_SK6812_GRBW
    *  - LEDS_PROTOCOL_SK9822
    */
@@ -84,6 +86,7 @@ enum leds_protocol {
   LEDS_PROTOCOL_WS2812B,
   LEDS_PROTOCOL_SK6812_GRBW,
   LEDS_PROTOCOL_WS2811,
+  LEDS_PROTOCOL_WS2815,
   LEDS_PROTOCOL_SK9822,
   LEDS_PROTOCOL_SM16703,
 

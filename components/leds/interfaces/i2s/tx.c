@@ -150,6 +150,7 @@ static int leds_interface_i2s_tx_write(struct leds_interface_i2s *interface, con
 
     case LEDS_INTERFACE_I2S_MODE_24BIT_1U200_4X4_80UL:
     case LEDS_INTERFACE_I2S_MODE_24BIT_1U250_4X4_80UL:
+    case LEDS_INTERFACE_I2S_MODE_24BIT_0U880_4X4_80UL:
     #if I2S_OUT_PARALLEL_SUPPORTED
       if (interface->parallel) {
         return leds_interface_i2s_tx_24bit_4x4_parallel8(interface, pixels, count, limit);
@@ -220,6 +221,7 @@ int leds_interface_i2s_init(struct leds_interface_i2s *interface, const struct l
 
     case LEDS_INTERFACE_I2S_MODE_24BIT_1U200_4X4_80UL:
     case LEDS_INTERFACE_I2S_MODE_24BIT_1U250_4X4_80UL:
+    case LEDS_INTERFACE_I2S_MODE_24BIT_0U880_4X4_80UL:
     case LEDS_INTERFACE_I2S_MODE_32BIT_1U250_4X4_80UL:
     #if LEDS_I2S_DATA_PINS_ENABLED
       if (interface->parallel) {
@@ -257,6 +259,13 @@ int leds_interface_i2s_init(struct leds_interface_i2s *interface, const struct l
       // four I2S bits per 1.25us protocol bit
       interface->i2s_out_options.clock = I2S_OUT_CLOCK_3M2;
 
+      break;
+
+    case LEDS_INTERFACE_I2S_MODE_24BIT_0U880_4X4_80UL:
+      // 4.54MHz bit clock => 220ns per I2S bit
+      // four I2S bits per 880ns protocol bit
+      interface->i2s_out_options.clock = I2S_OUT_CLOCK_4M54;
+      
       break;
 
     default:
@@ -311,6 +320,7 @@ int leds_interface_i2s_tx(struct leds_interface_i2s *interface, const struct led
 
     case LEDS_INTERFACE_I2S_MODE_24BIT_1U200_4X4_80UL:
     case LEDS_INTERFACE_I2S_MODE_24BIT_1U250_4X4_80UL:
+    case LEDS_INTERFACE_I2S_MODE_24BIT_0U880_4X4_80UL:
     case LEDS_INTERFACE_I2S_MODE_32BIT_1U250_4X4_80UL:
       // 1.25us per 4-bit = 2.5us per byte * four bytes per I2S sample = 10us per 32-bit I2S sample
       interface->i2s_out_options.eof_value = 0x00000000;
