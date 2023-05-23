@@ -183,6 +183,10 @@ int leds_set_format(struct leds *leds, enum leds_format format, const void *data
       leds_set_format_rgbw(leds, data, len, params);
       return 0;
 
+    case LEDS_FORMAT_CUSTOM:
+      leds_set_format_custom(leds, data, len, params);
+      return 0;
+
     default:
       LOG_ERROR("unknown format=%#x", format);
       return -1;

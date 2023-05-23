@@ -99,6 +99,7 @@ const struct config_enum leds_format_enum[] = {
   { "GRB",  LEDS_FORMAT_GRB  },
   { "RGBA", LEDS_FORMAT_RGBA },
   { "RGBW", LEDS_FORMAT_RGBW },
+  { "CUSTOM", LEDS_FORMAT_CUSTOM },
   {}
 };
 

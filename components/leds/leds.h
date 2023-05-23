@@ -48,3 +48,4 @@ void leds_set_format_bgr(struct leds *leds, const uint8_t *data, size_t len, str
 void leds_set_format_grb(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params);
 void leds_set_format_rgba(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params);
 void leds_set_format_rgbw(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params);
+void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params);

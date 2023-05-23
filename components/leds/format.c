@@ -1,4 +1,5 @@
 #include "leds.h"
+#include "custom_leds.h"
 
 #include <logging.h>
 
@@ -13,6 +14,9 @@ unsigned leds_format_count(enum leds_format format, size_t len)
     case LEDS_FORMAT_RGBA:
     case LEDS_FORMAT_RGBW:
       return len / 4;
+
+    case LEDS_FORMAT_CUSTOM:
+      return len / 12; //TODO
 
     default:
       LOG_FATAL("invalid format=%d", format);
@@ -114,4 +118,11 @@ void leds_set_format_rgbw(struct leds *leds, const uint8_t *data, size_t len, st
       };
     }
   }
+}
+
+void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params)
+{
+  LOG_DEBUG("len=%u offset=%u count=%u segment=%u", len, params.offset, params.count, params.segment);
+
+  leds_process_format_custom(leds, data, len, leds_format_params);
 }
