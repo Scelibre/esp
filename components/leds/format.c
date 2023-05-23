@@ -2,6 +2,8 @@
 
 #include <logging.h>
 
+#define min(x, y) (((x) < (y)) ? (x) : (y))
+
 unsigned leds_format_count(enum leds_format format, size_t len)
 {
   switch (format) {
@@ -125,23 +127,12 @@ struct leds_color custom_leds_color_get(const uint8_t value, enum leds_parameter
   uint8_t red = (value >> 5) * 32;
   uint8_t green = ((value & 28) >> 2) * 32;
   uint8_t blue = (value & 3) * 64;
+  uint8_t white = 0;
   if (parameter == LEDS_PARAMETER_WHITE) {
-    uint8_t white = min(red, min(green, blue));
-    if (leds_color.white < white) {
-      leds_color.white = white;
-    }
+    white = min(red, min(green, blue));
     red -= white;
     green -= white;
     blue -= white;
-  }
-  if (leds_color.r < red) {
-    leds_color.r = red;
-  }
-  if (leds_color.g < green) {
-    leds_color.g = green;
-  }
-  if (leds_color.b < blue) {
-    leds_color.b = blue;
   }
   return (struct leds_color) {
     .r = red,
@@ -171,16 +162,15 @@ void custom_leds_color_dimmer(struct leds_color color, uint8_t dimmer, enum leds
   if (parameter == LEDS_PARAMETER_WHITE) {
     color.white = color.white * d;
   } else {
-    color.r = color.r * r;
-    color.g = color.g * g;
-    color.b = color.b * b;
+    color.r = color.r * d;
+    color.g = color.g * d;
+    color.b = color.b * d;
   }
 }
 
 void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params)
 {
   enum leds_parameter_type parameter = leds_parameter_type(leds);
-  uint8_t parameter_default = leds_parameter_default(leds);
 
   LOG_DEBUG("len=%u offset=%u count=%u segment=%u", len, params.offset, params.count, params.segment);
 
@@ -192,7 +182,7 @@ void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, 
     .b = 0,
     .white = 0
   };
-  if ((dimmer == 0xFF) || ((strobe > 0) && (tick / (0xFFFF / (64 * (1 + value))) % 2))) { 
+  if ((dimmer == 0xFF) || ((strobe > 0) && (tick / (0xFFFF / (64 * (1 + strobe))) % 2))) { 
     // No calc, dimmer or strobe -> light off
     for (unsigned i = 0; i < params.count; i++) {
       leds->pixels[params.offset + i] = empty;
@@ -202,7 +192,7 @@ void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, 
       uint8_t type = data[2 + j * 3];
       if (type == 0) continue;
       uint8_t speed = data[3 + j * 3];
-      struct leds_color color = custom_leds_color_get(data[4 + j * 3]);
+      struct leds_color color = custom_leds_color_get(data[4 + j * 3], parameter);
       switch (type) {
         case 1: //FULL
           for (unsigned i = 0; i < params.count; i++) {
