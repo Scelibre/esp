@@ -121,8 +121,6 @@ void leds_set_format_rgbw(struct leds *leds, const uint8_t *data, size_t len, st
   }
 }
 
-uint16_t tick = 0; 
-
 struct leds_color custom_leds_color_get(const uint8_t value, enum leds_parameter_type parameter) {
   double red = 0;
   uint8_t green = 0;
@@ -191,14 +189,42 @@ void custom_leds_color_dimmer(struct leds_color *color, uint8_t dimmer) {
   color->b = color->b * d;
 }
 
+int16_t tick = 0;
+int tickA = 0;
+int tickB = 0;
+bool flashEnabled = false;
+uint8_t flashType = 0;
+uint16_t flashTick = 0;
+
+void leds_set_format_custom_prog(struct leds *leds, struct leds_format_params params, int tick, uint8_t type, struct leds_color color) {
+  if (type == 1) {
+    for (unsigned i = 0; i < params.count; i++) {
+      custom_leds_color_compose(&leds->pixels[params.offset + i], color);
+    }
+  } else if (type == 2) { // Allume tout puis éteind tout progressivement
+    if (tick < params.count){
+      for (unsigned i=0; i < tick; i++){
+        custom_leds_color_compose(&leds->pixels[params.offset + i], color);
+      }
+    } else {
+      for (unsigned i=0; i < (params.count - (tick - params.count)); i++){
+        custom_leds_color_compose(&leds->pixels[params.offset + i], color);
+      }
+    }
+  }
+}
+
 void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params)
 {
   enum leds_parameter_type parameter = leds_parameter_type(leds);
 
   LOG_DEBUG("len=%u offset=%u count=%u segment=%u", len, params.offset, params.count, params.segment);
 
+
   uint8_t dimmer = data[0];
   uint8_t strobe = data[1];
+  uint8_t flash = data[2];
+  uint8_t special = data[3];
 
   for (unsigned i = 0; i < params.count; i++) {
     leds->pixels[params.offset + i] = (struct leds_color) {
@@ -208,25 +234,30 @@ void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, 
       .white = 0
     };
   }
-  if ((dimmer == 0xFF) || ((strobe > 0) && (tick / (0xFFFF / (20 * (1 + strobe))) % 2))) { 
+  if ((dimmer == 0xFF) || ((strobe > 0) && (tick / (0xFFFF / (80 * (1 + strobe))) % 2))) { 
     // No calc, dimmer or strobe -> light off
   } else {
-    for (unsigned j = 0; j < 2; j++) {
-      uint8_t type = data[2 + j * 3];
-      if (type == 0) continue;
-      uint8_t speed = data[3 + j * 3];
-      struct leds_color color = custom_leds_color_get(data[4 + j * 3], parameter);
-      switch (type) {
-        case 1: //FULL
-          for (unsigned i = 0; i < params.count; i++) {
-            custom_leds_color_compose(&leds->pixels[params.offset + i], color);
-          }
-          break;
 
-        default:
-          break;
-      }
+    uint8_t divider = 12;
+
+    uint8_t typeA = data[4];
+    if (typeA > 0) {
+      struct leds_color color = custom_leds_color_get(data[6], parameter);
+      leds_set_format_custom_prog(leds, params, tickA, typeA, color);
+      tickA += (data[5] - 128) / divider;
+    } else {
+      tickA = 0;
     }
+    uint8_t typeB = data[7];
+    if (typeB > 0) {
+      struct leds_color color = custom_leds_color_get(data[9], parameter);
+      leds_set_format_custom_prog(leds, params, tickB, typeB, color);
+      tickB += (data[8] - 128) / divider;
+    } else {
+      tickB = 0;
+    }
+
+
 
     if (dimmer > 0) {
       if (parameter == LEDS_PARAMETER_DIMMER) {
@@ -241,9 +272,47 @@ void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, 
     }
   }
 
-  if (tick == 0xFFFF) {
+  if (flash > 0) {
+    if (!flashEnabled) {
+      flashEnabled = true;
+      flashType = flash;
+      flashTick = 0;
+    }
+  } else {
+    flashEnabled = false;
+  }
+
+  uint16_t cnt = (params.count * 2);
+
+  if (flashTick < cnt) {
+    flashTick++;
+    if (flashType >= 1 && flashType <= 3) {
+      uint8_t a = 255 - ((flashTick * 255) / cnt); 
+      struct leds_color w = (struct leds_color) {
+        .r = a,
+        .g = a,
+        .b = a,
+      };
+      for (unsigned i = 0; i < params.count; i++) {
+        custom_leds_color_compose(&leds->pixels[params.offset + i], w);
+      }
+      flashTick += 20 * flashType; // SPEED UP
+    }
+  }
+  
+  if (tick >= cnt) {
     tick = 0;
   } else {
     tick++;
+  }
+  if (tickA >= cnt) {
+    tickA += -cnt;
+  } else if (tickA < 0) {
+    tickA += cnt;
+  }
+  if (tickB >= cnt) {
+    tickB += -cnt;
+  } else if (tickB < 0) {
+    tickB += cnt;
   }
 }
