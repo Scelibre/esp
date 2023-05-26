@@ -213,48 +213,14 @@ void leds_set_format_custom_prog(struct leds *leds, struct leds_format_params pa
     }
   }
   else if (type == 3){ // 3 rangées de 10 leds qui avancent espacées
-    if (tick< params.count/3){
-    for (unsigned i=0; i<10;i++){
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick +params.count/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick +2*params.count/3], color);
+    for (unsigned z=1; z<6; z++){
+      if (tick< z*params.count/3){
+        for (unsigned i=0; i<10;i++){
+          for (unsigned j=0;j<2;j++){
+            custom_leds_color_compose(&leds->pixels[params.offset + i +tick +j*params.count/3], color);
+          }
+        }
       }
-    }
-    else if (tick<2*params.count/3) {
-      for (unsigned i=0; i<10;i++){
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/2], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/2 +params.count/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/2 +2*params.count/3], color);
-      }
-    }
-    else if (tick<params.count) {
-      for (unsigned i=0; i<10;i++){
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/3 +params.count/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/3 +2*params.count/3], color);
-    }
-    }
-    else if (tick<4*params.count/3) {
-      for (unsigned i=0; i<10;i++){
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/4], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/4 +params.count/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/4 +2*params.count/3], color);
-    }
-    }
-    else if (tick<5*params.count/3) {
-      for (unsigned i=0; i<10;i++){
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/5], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/5 +params.count/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/5 +2*params.count/3], color);
-    }
-    }
-    else{
-      for (unsigned i=0; i<10;i++){
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/6], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/6 +params.count/3], color);
-      custom_leds_color_compose(&leds->pixels[params.offset + i +tick/6 +2*params.count/3], color);
-    }
-
     }
   }
       
