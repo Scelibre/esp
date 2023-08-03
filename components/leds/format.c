@@ -1,7 +1,7 @@
 #include "leds.h"
+#include "esp_system.h"
 
 #include <logging.h>
-
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 
 unsigned leds_format_count(enum leds_format format, size_t len)
@@ -195,6 +195,8 @@ int tickB = 0;
 bool flashEnabled = false;
 uint8_t flashType = 0;
 uint16_t flashTick = 0;
+uint16_t rainPos;
+uint16_t rainDist;
 
 void leds_set_format_custom_prog(struct leds *leds, struct leds_format_params params, int tick, uint8_t type, struct leds_color color) {
   if (type == 1) {
@@ -211,20 +213,54 @@ void leds_set_format_custom_prog(struct leds *leds, struct leds_format_params pa
         custom_leds_color_compose(&leds->pixels[params.offset + i], color);
       }
     }
-  }
-  else if (type == 3){ // 3 rangées de 10 leds qui avancent espacées
-    for (unsigned z=1; z<6; z++){
-      if (tick< z*params.count/3){
-        for (unsigned i=0; i<10;i++){
-          for (unsigned j=0;j<2;j++){
-            custom_leds_color_compose(&leds->pixels[params.offset + i +tick +j*params.count/3], color);
+  } else if (type == 3) { // 3 rangées de 20 leds qui avancent espacées
+      for (unsigned i=0; i<20;i++){
+        for (unsigned j=0;j<3;j++){
+          int a= params.offset + i +tick/6 +j*params.count/3;
+          if(a>params.count){
+            a-=params.count;
           }
+          custom_leds_color_compose(&leds->pixels[a], color);
         }
       }
+    } else if (type == 4) { // allume puis éteind symétrique 
+      int tictac=tick/2;
+      if (tictac<params.count/2) {
+        for (unsigned i=0;i<tictac;i++) {
+          custom_leds_color_compose(&leds->pixels[params.offset+i], color);
+          custom_leds_color_compose(&leds->pixels[params.offset+params.count-i], color);
+        }
+      } else {
+        for (unsigned i=0;i<params.count/2-(tictac-params.count/2);i++) {
+          custom_leds_color_compose(&leds->pixels[params.offset+i], color);
+          custom_leds_color_compose(&leds->pixels[params.offset+params.count-i], color);
+        }
+      }
+    } else if (type==6) {
+      for ( unsigned i = 0; i < params.count; i+=3) {
+        int a = i+tick;
+        while (a >= params.count) {
+          a -= params.count;
+        }
+        custom_leds_color_compose(&leds->pixels[params.offset+a], color) ; 
+      }
     }
-  }
+
+    /*else if (type==5){ // pluie
+      while (!tick%100 || tictac){
+      }
+
+      rainPos=esp_random()/10374318;
+      rainDist=esp_random()/536870912;
+      uint16_t tictac=tick;
+
+      for (unsigned i=0;i<2*dist-1;i++){
+        custom_leds_color_compose(&leds->pixels[params.offset+rainPos+i*(tick-tictac)], color);
+        //custom_leds_color_dimmer(&leds->pixels[params.offset+rainPos+i*(tick-tictac)], dimmer);
+      }
       
-  
+    }*/
+}
 
 void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, struct leds_format_params params)
 {
@@ -284,6 +320,51 @@ void leds_set_format_custom(struct leds *leds, const uint8_t *data, size_t len, 
     }
   }
 
+  // Special
+
+  if (special > 0) {
+    if (special >= 1 && special <= 4) { // Random
+      for (int i = 0; i < special; i++) {
+        int l = ((esp_random() / 0xFFFF) * params.count) / (UINT32_MAX / 0xFFFF);
+        leds->pixels[params.offset + l] = (struct leds_color) {
+          .r = 255,
+          .g = 255,
+          .b = 255,
+          .white = 0
+        };
+      }
+    } else if (special == 5) { // Vague
+      for (int i = 0; i < 9; i++) {
+        for (int j = 0; j <= 414 / 9; j++) {
+          int b = 414 / 18;
+          int l = i + j + i * (414 / 9) + tick;
+          while (l >= params.count) {
+            l = l - params.count;
+          }
+          if (j > b) { // Dec
+            custom_leds_color_dimmer(&leds->pixels[params.offset + l], (j * 255) / b); 
+          } else { // Up
+            custom_leds_color_dimmer(&leds->pixels[params.offset + l], ((b - (j - b)) * 255) / b);
+          }
+        }
+      }
+    } else if (special >= 6 && special <= 9) { // 
+      if (tick >= params.count) {
+        int a = (tick * 255) / params.count;
+        for (unsigned i = 0; i < params.count; i++) {
+          custom_leds_color_dimmer(&leds->pixels[params.offset + i], a);
+        }
+      } else {
+        int a = ((params.count - (tick - params.count)) * 255) / params.count;
+        for (unsigned i = 0; i < params.count; i++) {
+          custom_leds_color_dimmer(&leds->pixels[params.offset + i], a);
+        }
+      }
+      tick += (special - 5) * 4;
+    } 
+  }
+
+  // Flash
   if (flash > 0) {
     if (!flashEnabled) {
       flashEnabled = true;
